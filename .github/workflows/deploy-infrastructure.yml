@@ -1,0 +1,103 @@
+name: Deploy Azure Container Apps Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Select deployment environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy Container Apps - ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+
+    env:
+      AZURE_LOCATION: centralindia
+
+      RESOURCE_GROUP_NAME: ${{ inputs.environment == 'dev' && 'rg-springboot-app-dev' || 'rg-document-analysis-qa' }}
+
+      LOG_ANALYTICS_NAME: ${{ inputs.environment == 'dev' && 'law-springboot-app-dev' || 'law-document-analysis-qa' }}
+
+      CONTAINER_APPS_ENVIRONMENT_NAME: ${{ inputs.environment == 'dev' && 'cae-springboot-app-dev' || 'cae-document-analysis-qa' }}
+
+      CONTAINER_APP_NAME: ${{ inputs.environment == 'dev' && 'ca-springboot-app-dev' || 'ca-document-analysis-qa' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Azure Container Apps Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: deploy-container-apps-${{ inputs.environment }}
+          scope: resourceGroup
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ env.RESOURCE_GROUP_NAME }}
+          template-file: infra/modules/container-apps/main.bicep
+          parameters: |
+            location: ${{ env.AZURE_LOCATION }}
+            logAnalyticsName: ${{ env.LOG_ANALYTICS_NAME }}
+            containerAppsEnvironmentName: ${{ env.CONTAINER_APPS_ENVIRONMENT_NAME }}
+            containerAppName: ${{ env.CONTAINER_APP_NAME }}
+            containerImage: ${{ vars.DOCKERHUB_USERNAME }}/spring-boot-app:latest
+            targetPort: 8081
+            externalIngress: true
+            minReplicas: 0
+            maxReplicas: 2
+            cpu: 0.5
+            memory: 1Gi
+            appEnvironmentVariables:
+              - name: SPRING_PROFILES_ACTIVE
+                value: ${{ inputs.environment }}
+            tags:
+              application: document-analysis
+              environment: ${{ inputs.environment }}
+              managedBy: bicep
+
+      - name: Deployment Summary
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: what-if
+          name: verify-container-apps-${{ inputs.environment }}
+          scope: resourceGroup
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ env.RESOURCE_GROUP_NAME }}
+          template-file: infra/modules/container-apps/main.bicep
+          parameters: |
+            location: ${{ env.AZURE_LOCATION }}
+            logAnalyticsName: ${{ env.LOG_ANALYTICS_NAME }}
+            containerAppsEnvironmentName: ${{ env.CONTAINER_APPS_ENVIRONMENT_NAME }}
+            containerAppName: ${{ env.CONTAINER_APP_NAME }}
+            containerImage: ${{ vars.DOCKERHUB_USERNAME }}/spring-boot-app:latest
+            targetPort: 8081
+            externalIngress: true
+            minReplicas: 0
+            maxReplicas: 2
+            cpu: 0.5
+            memory: 1Gi
+            appEnvironmentVariables:
+              - name: SPRING_PROFILES_ACTIVE
+                value: ${{ inputs.environment }}
+            tags:
+              application: document-analysis
+              environment: ${{ inputs.environment }}
+              managedBy: bicep

@@ -63,8 +63,26 @@ jobs:
               environment: ${{ inputs.environment }}
               managedBy: bicep
 
-      # 4. Validate Container Apps Bicep template
-      # Template validation can run before the Resource Group exists.
+      - name: Deploy Resource Group
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: create-resource-group-${{ inputs.environment }}
+          scope: subscription
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          location: ${{ env.AZURE_LOCATION }}
+          template-file: infra/modules/resource-groups/spring-boot-app-rg.bicep
+          parameters: |
+            resourceGroupName: ${{ env.RESOURCE_GROUP_NAME }}
+            location: ${{ env.AZURE_LOCATION }}
+            tags:
+              application: document-analysis
+              environment: ${{ inputs.environment }}
+              managedBy: bicep
+
+
+
       - name: Validate Container Apps Bicep
         uses: azure/bicep-deploy@v2
         with:
@@ -96,23 +114,6 @@ jobs:
               managedBy: bicep
 
       # 5. Create or update Resource Group
-      - name: Deploy Resource Group
-        uses: azure/bicep-deploy@v2
-        with:
-          type: deployment
-          operation: create
-          name: create-resource-group-${{ inputs.environment }}
-          scope: subscription
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          location: ${{ env.AZURE_LOCATION }}
-          template-file: infra/modules/resource-groups/spring-boot-app-rg.bicep
-          parameters: |
-            resourceGroupName: ${{ env.RESOURCE_GROUP_NAME }}
-            location: ${{ env.AZURE_LOCATION }}
-            tags:
-              application: document-analysis
-              environment: ${{ inputs.environment }}
-              managedBy: bicep
 
       # 6. Preview changes before Container Apps deployment
       - name: What-If Container Apps Infrastructure

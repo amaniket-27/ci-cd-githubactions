@@ -103,7 +103,7 @@ jobs:
             externalIngress: true
             minReplicas: 0
             maxReplicas: 2
-            cpu: 0.5
+            cpusize: 0.5
             memory: 1Gi
             appEnvironmentVariables:
               - name: SPRING_PROFILES_ACTIVE
@@ -136,7 +136,7 @@ jobs:
             externalIngress: true
             minReplicas: 0
             maxReplicas: 2
-            cpu: 0.5
+            cpusize: 0.5
             memory: 1Gi
             appEnvironmentVariables:
               - name: SPRING_PROFILES_ACTIVE
@@ -167,7 +167,7 @@ jobs:
             externalIngress: true
             minReplicas: 0
             maxReplicas: 2
-            cpu: 0.5
+            cpusize: 0.5
             memory: 1Gi
             appEnvironmentVariables:
               - name: SPRING_PROFILES_ACTIVE

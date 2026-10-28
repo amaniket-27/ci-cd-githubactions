@@ -33,20 +33,20 @@ param maxReplicas int = 2
 
 @description('Container CPU allocation.')
 @allowed([
-  0.25
-  0.5
-  0.75
-  1
-  1.25
-  1.5
-  1.75
-  2
-  2.5
-  3
-  3.5
-  4
+  '0.25'
+  '0.5'
+  '0.75'
+  '1'
+//   1.25
+//   1.5
+//   1.75
+//   2
+//   2.5
+//   3
+//   3.5
+//   4
 ])
-param cpu float = 0.5
+param cpu string = '0.5'
 
 @description('Container memory allocation.')
 param memory string = '1Gi'
@@ -56,7 +56,7 @@ param appEnvironmentVariables array = []
 
 @description('Resource tags.')
 param tags object = {
-  environment='dev'
+  environment:'dev'
 }
 
 // Log Analytics workspace
@@ -112,7 +112,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'spring-boot-app'
           image: containerImage
           resources: {
-            cpu: cpu
+            cpu: json(cpu)
             memory: memory
           }
           env: appEnvironmentVariables

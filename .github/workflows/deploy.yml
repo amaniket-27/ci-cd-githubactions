@@ -3,7 +3,7 @@ name: Spring Boot build and deploy
 on:
   push:
     branches:
-      - main
+      - none
 env:
   IMAGE_NAME: spring-boot-app
 

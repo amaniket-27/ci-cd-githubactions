@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy Container Apps - ${{ inputs.environment }}
+    name: Validate and Deploy - ${{ inputs.environment }}
     runs-on: ubuntu-latest
 
     env:
@@ -32,29 +32,45 @@ jobs:
       CONTAINER_APP_NAME: ${{ inputs.environment == 'dev' && 'ca-springboot-app-dev' || 'ca-document-analysis-qa' }}
 
     steps:
+      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Azure authentication
       - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Verify Login
-        run: |
-          echo "Current Azure Account:"
-          az account show
 
-          echo "Available Subscriptions:"
-          az account list --output table
-
-      - name: Deploy Azure Container Apps Infrastructure
+      # 3. Validate Resource Group Bicep template
+      - name: Validate Resource Group Bicep
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
-          operation: create
-          name: deploy-container-apps-${{ inputs.environment }}
+          operation: validate
+          name: validate-resource-group-${{ inputs.environment }}
+          scope: subscription
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          location: ${{ env.AZURE_LOCATION }}
+          template-file: infra/modules/resource-groups/spring-boot-app-rg.bicep
+          parameters: |
+            resourceGroupName: ${{ env.RESOURCE_GROUP_NAME }}
+            location: ${{ env.AZURE_LOCATION }}
+            tags:
+              application: document-analysis
+              environment: ${{ inputs.environment }}
+              managedBy: bicep
+
+      # 4. Validate Container Apps Bicep template
+      # Template validation can run before the Resource Group exists.
+      - name: Validate Container Apps Bicep
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: validate
+          name: validate-container-apps-${{ inputs.environment }}
           scope: resourceGroup
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ env.RESOURCE_GROUP_NAME }}
@@ -79,12 +95,63 @@ jobs:
               environment: ${{ inputs.environment }}
               managedBy: bicep
 
-      - name: Deployment Summary
+      # 5. Create or update Resource Group
+      - name: Deploy Resource Group
         uses: azure/bicep-deploy@v2
         with:
           type: deployment
-          operation: what-if
-          name: verify-container-apps-${{ inputs.environment }}
+          operation: create
+          name: create-resource-group-${{ inputs.environment }}
+          scope: subscription
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          location: ${{ env.AZURE_LOCATION }}
+          template-file: infra/modules/resource-groups/spring-boot-app-rg.bicep
+          parameters: |
+            resourceGroupName: ${{ env.RESOURCE_GROUP_NAME }}
+            location: ${{ env.AZURE_LOCATION }}
+            tags:
+              application: document-analysis
+              environment: ${{ inputs.environment }}
+              managedBy: bicep
+
+      # 6. Preview changes before Container Apps deployment
+      - name: What-If Container Apps Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: whatIf
+          name: preview-container-apps-${{ inputs.environment }}
+          scope: resourceGroup
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resource-group-name: ${{ env.RESOURCE_GROUP_NAME }}
+          template-file: infra/modules/container-apps/spring-boot-aca-dev.bicep
+          parameters: |
+            location: ${{ env.AZURE_LOCATION }}
+            logAnalyticsName: ${{ env.LOG_ANALYTICS_NAME }}
+            containerAppsEnvironmentName: ${{ env.CONTAINER_APPS_ENVIRONMENT_NAME }}
+            containerAppName: ${{ env.CONTAINER_APP_NAME }}
+            containerImage: ${{ vars.DOCKERHUB_USERNAME }}/spring-boot-app:latest
+            targetPort: 8081
+            externalIngress: true
+            minReplicas: 0
+            maxReplicas: 2
+            cpu: 0.5
+            memory: 1Gi
+            appEnvironmentVariables:
+              - name: SPRING_PROFILES_ACTIVE
+                value: ${{ inputs.environment }}
+            tags:
+              application: document-analysis
+              environment: ${{ inputs.environment }}
+              managedBy: bicep
+
+      # 7. Deploy Container Apps infrastructure
+      - name: Deploy Container Apps Infrastructure
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          name: deploy-container-apps-${{ inputs.environment }}
           scope: resourceGroup
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resource-group-name: ${{ env.RESOURCE_GROUP_NAME }}

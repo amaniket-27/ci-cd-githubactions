@@ -38,7 +38,7 @@ param maxReplicas int = 2
   '0.75'
   '1'
 ])
-param cpu string = '0.5'
+param cpusize string = '0.5'
 
 @description('Container memory allocation.')
 param memory string = '1Gi'
@@ -104,7 +104,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'spring-boot-app'
           image: containerImage
           resources: {
-            cpu: json(cpu)
+            cpu: any(cpusize)
             memory: memory
           }
           env: appEnvironmentVariables

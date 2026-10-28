@@ -37,14 +37,6 @@ param maxReplicas int = 2
   '0.5'
   '0.75'
   '1'
-//   1.25
-//   1.5
-//   1.75
-//   2
-//   2.5
-//   3
-//   3.5
-//   4
 ])
 param cpu string = '0.5'
 
@@ -116,6 +108,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: memory
           }
           env: appEnvironmentVariables
+
         }
       ]
 

@@ -104,7 +104,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'spring-boot-app'
           image: containerImage
           resources: {
-            cpu: any(cpusize)
+            cpu: json(cpusize)
             memory: memory
           }
           env: appEnvironmentVariables

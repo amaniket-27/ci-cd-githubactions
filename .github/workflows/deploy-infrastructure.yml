@@ -98,7 +98,7 @@ jobs:
             logAnalyticsName: ${{ env.LOG_ANALYTICS_NAME }}
             containerAppsEnvironmentName: ${{ env.CONTAINER_APPS_ENVIRONMENT_NAME }}
             containerAppName: ${{ env.CONTAINER_APP_NAME }}
-            containerImage: ${{ vars.DOCKERHUB_USERNAME }}/spring-boot-app:latest
+            containerImage: ${{ vars.DOCKER_USERNAME }}/spring-boot-app:latest
             targetPort: 8081
             externalIngress: true
             minReplicas: 0
@@ -131,7 +131,7 @@ jobs:
             logAnalyticsName: ${{ env.LOG_ANALYTICS_NAME }}
             containerAppsEnvironmentName: ${{ env.CONTAINER_APPS_ENVIRONMENT_NAME }}
             containerAppName: ${{ env.CONTAINER_APP_NAME }}
-            containerImage: ${{ vars.DOCKERHUB_USERNAME }}/spring-boot-app:latest
+            containerImage: ${{ vars.DOCKER_USERNAME }}/spring-boot-app:latest
             targetPort: 8081
             externalIngress: true
             minReplicas: 0
@@ -162,7 +162,7 @@ jobs:
             logAnalyticsName: ${{ env.LOG_ANALYTICS_NAME }}
             containerAppsEnvironmentName: ${{ env.CONTAINER_APPS_ENVIRONMENT_NAME }}
             containerAppName: ${{ env.CONTAINER_APP_NAME }}
-            containerImage: ${{ vars.DOCKERHUB_USERNAME }}/spring-boot-app:latest
+            containerImage: ${{ vars.DOCKER_USERNAME }}/spring-boot-app:latest
             targetPort: 8081
             externalIngress: true
             minReplicas: 0
